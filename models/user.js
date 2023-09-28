@@ -1,6 +1,8 @@
 const { Schema, model }=require('mongoose');
 const { createHmac, randomBytes }=require("node:crypto");
 
+const { createTokenForUser }=require('../utils/auth')
+
 const userSchema=new Schema({
 	fullName: {
 		type: String,
@@ -42,7 +44,7 @@ userSchema.pre('save', function (next) {
 	next();
 });
 
-userSchema.statics.matchPassword=async function (email, password) {
+userSchema.statics.matchPasswordAndReturnToken=async function (email, password) {
 	const user=await this.findOne({ email });
 	if (!user) {
 		throw new Error("User not found with the given email");
@@ -55,7 +57,8 @@ userSchema.statics.matchPassword=async function (email, password) {
 		throw new Error("Password are not matched")
 	}
 
-	return { ...user, password: undefined, salt: undefined } //// we can only return user also like return user;
+	const token=createTokenForUser(user);
+	return token;
 }
 
 
